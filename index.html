@@ -44,10 +44,8 @@
         </div>
     </form>
     
-
-
     <div class="container table-responsive text-center">
-        <table class="table table-bordered table-hover">
+        <table class="table table-bordered table-hover" id="taula-resultats">
             <thead class="thead-light">
                 <tr>
                     <th>Nom</th>
@@ -56,11 +54,6 @@
                </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>e</td>
-                    <td>x</td>
-                    <td>z</td>
-                </tr>
             </tbody> 
         </table>
     </div>
@@ -74,17 +67,53 @@
             var peticiousuariexistent = $.get("https://api.github.com/users/" + $("#usuari").val(), function(data, status, responsecode){
                 if (responsecode.status == 200)
                 {
+                    $("#taula-resultats tbody tr").remove();
                     $("#ajudausuaribuscar").text("L'usuari existeix.");
+                    $("#ajudausuaribuscar").removeClass("text-muted");
+                    $("#ajudausuaribuscar").addClass("text-success");
                     $("#botobuscador").removeClass("disabled");
-                    document.getElementById("ajudausuaribuscar").style.color = "#00FF00";
                 }
             });
 
             peticiousuariexistent.fail(function() {
+                $("#taula-resultats tbody tr").remove();
                 $("#ajudausuaribuscar").html("L'usuari <b>no</b> existeix.");
                 $("#botobuscador").addClass("disabled");
-                document.getElementById("ajudausuaribuscar").style.color = "#FF0000";
+                $("#ajudausuaribuscar").addClass("text-danger");
+                $("#ajudausuaribuscar").removeClass("text-muted");
             });
         });
+    });
+</script>
+
+<!--Funció per fer la búsqueda dels repositoris existents de l'usuari buscat-->
+<script>
+    $(document).ready(function(){
+        $("#botobuscador").click(function(){
+            var consulta = $.getJSON("https://api.github.com/users/" + $("#usuari").val() + "/repos", function(resposta, status, responsecode){
+                $("#taula-resultats tbody tr").remove();
+                for(let i = 0; i < resposta.length; i++)
+                {
+                    if (resposta[i].description == null)
+                    {
+                        resposta[i].description = "-";
+                    }
+                    $("#taula-resultats>tbody").append("<tr><td><a href=" + resposta[i].svn_url + ">" + resposta[i].name + "</a></td><td>" + resposta[i].description + "</td><td>" + resposta[i].stargazers_count + "</td></tr>");
+                }
+            });
+        });
+    });
+</script>
+
+<!--Detectar al instant si l'usuari modifica el nom d'usuari, per tal d'evitar que es faci la búsqueda d'un usuari que no existeix-->
+<script>
+    $(document).ready(function() { 
+        $('#usuari').on("input", function() { 
+            $("#botobuscador").addClass("disabled");
+            $("#ajudausuaribuscar").addClass("text-muted");
+            $("#ajudausuaribuscar").removeClass("text-success");
+            $("#ajudausuaribuscar").removeClass("text-danger");
+            $("#ajudausuaribuscar").html("Exemple: https://github.com/<b>mcgonzalc</b>");
+        }); 
     });
 </script>
