@@ -46,6 +46,16 @@
     
     <div class="container table-responsive collapse multi-collapse" id="resultats">
         <h3 class="text-center" id="usuari-0repos" style="display: none">L'usuari buscat no té repositoris públics.</h3>
+        <div class="row mb-4 ml-5 align-items-center">
+            <div class="col-sm-6 text-center">
+                <img src="./img/default.png" id="imatge-usuari" class="rounded" style="width: 250px; height: 250px; max-width: 100%; height:auto">
+            </div>
+            <div class="col-sm-6">
+                <p id="numero-repositoris-publics">Número de repositoris públics: </p>
+                <p id="data-creacio-compte">Data de creació del compte: </p>
+                <p id="data-ultim-dia-activitat">Data de l'últim dia amb activitat: </p>
+            </div>
+        </div>
         <table class="table table-bordered table-hover text-center" id="taula-resultats">
             <thead class="thead-light">
                 <tr>
@@ -65,7 +75,7 @@
 <script>
     $(document).ready(function(){
         $("#boto-comprobador").click(function(){
-            var peticiousuariexistent = $.get("https://api.github.com/users/" + $("#usuari").val(), function(data, status, responsecode){
+            var peticiousuariexistent = $.get("https://api.github.com/users/" + $("#usuari").val(), function(resposta, status, responsecode){
                 if (responsecode.status == 200)
                 {
                     $("#botobuscador").prop("disabled",false);
@@ -108,6 +118,16 @@
                         $("#taula-resultats>tbody").append("<tr><td><a href=" + resposta[i].svn_url + ">" + resposta[i].name + "</a></td><td>" + resposta[i].description + "</td><td>" + resposta[i].stargazers_count + "</td></tr>");
                         }
                         $('#taula-resultats').fadeIn();
+
+                        $.getJSON("https://api.github.com/users/" + $("#usuari").val() + "/events", function(respostaevent, status, responsecode){
+                            $("#data-ultim-dia-activitat").text("Data de l'últim dia amb activitat: " + respostaevent[0].created_at);
+                        });
+
+                        $.getJSON("https://api.github.com/users/" + $("#usuari").val(), function(respostadadespersonals, status, responsecode){
+                            $("#data-creacio-compte").text("Data de creació del compte: " + respostadadespersonals.created_at);
+                            $("#numero-repositoris-publics").text("Número de repositoris públics: " + respostadadespersonals.public_repos);
+                            $("#imatge-usuari").attr("src", respostadadespersonals.avatar_url)
+                        });
                     }
                     else
                     {
