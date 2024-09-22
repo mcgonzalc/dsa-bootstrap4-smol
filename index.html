@@ -10,14 +10,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   </head>
   <body>
-    <div class="jumbotron jumbotron-fluid text-center" style="margin-bottom: 5;">
+    <div class="jumbotron jumbotron-fluid text-center" style="margin-bottom: 5;" id="titol">
         <h1>Buscador d'usuaris de GitHub</h1>
         <h6>Creat per Marc González Alcolea</h6>
     </div>
     
     <form>
-        <p class="text-center">Escriu el nom d'usuari de GitHub que vols cercar</p>
-        <div class="container">
+        <div class="container collapse show multi-collapse" id="buscador-usuari">
+            <p class="text-center">Escriu el nom d'usuari de GitHub que vols cercar</p>
             <div class="row justify-content-center">
                 <div class="input-group w-75">
                     <!--Definim la part anterior a on l'usuari escriu la seva petició-->
@@ -37,15 +37,15 @@
             <div class="row justify-content-center">
                 <small id="ajudausuaribuscar" class="form-text text-muted text-center mb-3">Exemple: https://github.com/<b>mcgonzalc</b></small>
             </div>
-            <!--Botó per fer la búsqueda desitjada-->
-            <div class="row justify-content-center">
-                <button type="button" class="btn btn-primary mb-3 disabled" id="botobuscador">Buscar</button>
-            </div>
+        </div>
+        <!--Botó per fer la búsqueda desitjada-->
+        <div class="row justify-content-center">
+            <button type="button" class="btn btn-primary mb-3 disabled" id="botobuscador" data-toggle="collapse" data-target=".multi-collapse" disabled="true" aria-expanded="false" aria-controls="buscador-usuari resultats">Buscar</button>
         </div>
     </form>
     
-    <div class="container table-responsive text-center">
-        <table class="table table-bordered table-hover" id="taula-resultats">
+    <div class="container table-responsive collapse multi-collapse" id="resultats">
+        <table class="table table-bordered table-hover text-center" id="taula-resultats">
             <thead class="thead-light">
                 <tr>
                     <th>Nom</th>
@@ -67,18 +67,18 @@
             var peticiousuariexistent = $.get("https://api.github.com/users/" + $("#usuari").val(), function(data, status, responsecode){
                 if (responsecode.status == 200)
                 {
-                    $("#taula-resultats tbody tr").remove();
+                    $("#botobuscador").prop("disabled",false);
+                    $("#botobuscador").removeClass("disabled");
                     $("#ajudausuaribuscar").text("L'usuari existeix.");
                     $("#ajudausuaribuscar").removeClass("text-muted");
                     $("#ajudausuaribuscar").addClass("text-success");
-                    $("#botobuscador").removeClass("disabled");
                 }
             });
 
             peticiousuariexistent.fail(function() {
-                $("#taula-resultats tbody tr").remove();
                 $("#ajudausuaribuscar").html("L'usuari <b>no</b> existeix.");
                 $("#botobuscador").addClass("disabled");
+                $("#botobuscador").prop("disabled",true);
                 $("#ajudausuaribuscar").addClass("text-danger");
                 $("#ajudausuaribuscar").removeClass("text-muted");
             });
@@ -90,17 +90,32 @@
 <script>
     $(document).ready(function(){
         $("#botobuscador").click(function(){
-            var consulta = $.getJSON("https://api.github.com/users/" + $("#usuari").val() + "/repos", function(resposta, status, responsecode){
-                $("#taula-resultats tbody tr").remove();
-                for(let i = 0; i < resposta.length; i++)
-                {
-                    if (resposta[i].description == null)
+            if($("#buscador-usuari").hasClass("show"))
+            {
+                $("#botobuscador").text("Tornar");
+                $.getJSON("https://api.github.com/users/" + $("#usuari").val() + "/repos", function(resposta, status, responsecode){
+                    $("#taula-resultats tbody tr").remove();
+                    if (0 < resposta.length)
                     {
-                        resposta[i].description = "-";
+                        for(let i = 0; i < resposta.length; i++)
+                        {
+                            if (resposta[i].description == null)
+                            {
+                                resposta[i].description = "-";
+                            }
+                        $("#taula-resultats>tbody").append("<tr><td><a href=" + resposta[i].svn_url + ">" + resposta[i].name + "</a></td><td>" + resposta[i].description + "</td><td>" + resposta[i].stargazers_count + "</td></tr>");
+                        }
                     }
-                    $("#taula-resultats>tbody").append("<tr><td><a href=" + resposta[i].svn_url + ">" + resposta[i].name + "</a></td><td>" + resposta[i].description + "</td><td>" + resposta[i].stargazers_count + "</td></tr>");
-                }
-            });
+                });
+            }
+            else
+            {
+                $('#resultats').on('hidden.bs.collapse', function () {
+                    $("#botobuscador").text("Buscar");
+                    $("#botobuscador").addClass("disabled");
+                    $("#botobuscador").prop("disabled",true);
+                })
+            } 
         });
     });
 </script>
@@ -108,8 +123,9 @@
 <!--Detectar al instant si l'usuari modifica el nom d'usuari, per tal d'evitar que es faci la búsqueda d'un usuari que no existeix-->
 <script>
     $(document).ready(function() { 
-        $('#usuari').on("input", function() { 
+        $('#usuari').on("input", function() {
             $("#botobuscador").addClass("disabled");
+            $("#botobuscador").prop("disabled",true);
             $("#ajudausuaribuscar").addClass("text-muted");
             $("#ajudausuaribuscar").removeClass("text-success");
             $("#ajudausuaribuscar").removeClass("text-danger");
